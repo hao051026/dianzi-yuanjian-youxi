@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注册 / 登录 · 电子社小游戏厅</title>
+<style>
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
+  #app{width:100%;max-width:400px;padding:18px 16px 40px;}
+  header{text-align:center;padding:14px 0 4px;}
+  header h1{font-size:24px;letter-spacing:2px;}
+  header h1 .dot{color:var(--pink);}
+  header p{font-size:12px;color:#9a8f8f;margin-top:4px;}
+  .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:18px;margin-top:14px;}
+  .tabs{display:flex;border-radius:12px;overflow:hidden;border:2px solid #F6DCDA;}
+  .tab{flex:1;border:none;background:#fff;padding:11px 0;font-size:15px;font-family:inherit;color:var(--ink);cursor:pointer;}
+  .tab.on{background:var(--pink);color:#fff;font-weight:bold;}
+  .field{margin-top:14px;}
+  .field label{display:block;font-size:13px;color:#7d7070;margin-bottom:6px;}
+  .field input{width:100%;border:2px solid #F6DCDA;border-radius:12px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--ink);outline:none;}
+  .field input:focus{border-color:var(--pink);}
+  #msg{display:none;margin-top:12px;border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.6;}
+  #msg.ok{background:#E4F7F0;color:#177A54;}
+  #msg.no{background:#FDEBEC;color:#8F2F39;}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-family:inherit;color:#fff;background:var(--pink);cursor:pointer;margin-top:16px;}
+  .btn:active{transform:scale(.98);}
+  .now{margin-top:14px;text-align:center;font-size:13px;color:#7d7070;}
+  .now b{color:var(--ink);}
+  .tip{margin-top:14px;font-size:11px;color:#b8a9a9;line-height:1.8;text-align:center;}
+  .hubbar{text-align:center;margin-top:8px;}
+  .hubbar a{display:inline-block;background:#fff;border-radius:99px;padding:6px 16px;color:var(--ink);text-decoration:none;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>注册<span class="dot">/</span>登录</h1><p>起个名字 · 以后每次成绩都记在你名下</p></header>
+  <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" id="treg" onclick="mode('reg')">注册新名字</button>
+      <button class="tab" id="tlog" onclick="mode('log')">已有名字，登录</button>
+    </div>
+    <div class="field"><label>名字（2–16 位，中文/字母/数字/下划线）</label><input id="fuser" maxlength="16" autocomplete="username" placeholder="比如：小焊侠"></div>
+    <div class="field"><label>密码（4–32 位）</label><input id="fpw" type="password" maxlength="32" autocomplete="current-password" placeholder="至少 4 位"></div>
+    <div class="field" id="fpw2w"><label>再输一遍密码</label><input id="fpw2" type="password" maxlength="32" placeholder="两个密码要一样"></div>
+    <div id="msg"></div>
+    <button class="btn" id="bsub" onclick="submit()">注册并开始玩</button>
+    <div class="now" id="nownow"></div>
+  </div>
+  <div class="tip">账号和成绩保存在这台设备的浏览器里（本地存储）· 换设备需要重新注册<br>密码仅做本地加密存储，请勿使用常用密码</div>
+</div>
+<script src="es.js"></script>
+<script>
+"use strict";
+var M="reg";
+function qs(k){return document.getElementById(k);}
+function mode(m){
+  M=m;
+  qs("treg").className="tab"+(m==="reg"?" on":"");
+  qs("tlog").className="tab"+(m==="log"?" on":"");
+  qs("fpw2w").style.display=m==="reg"?"block":"none";
+  qs("bsub").textContent=m==="reg"?"注册并开始玩":"登录并开始玩";
+  qs("msg").style.display="none";
+}
+function say(ok,text){
+  var m=qs("msg");
+  m.className=ok?"ok":"no";
+  m.textContent=text;
+  m.style.display="block";
+}
+function back(){
+  var b=location.search.match(/[?&]back=([A-Za-z0-9_.-]+)/);
+  return b?decodeURIComponent(b[1]):"index.html";
+}
+function submit(){
+  var n=qs("fuser").value.trim(), p=qs("fpw").value;
+  if(M==="reg"){
+    var p2=qs("fpw2").value;
+    if(p!==p2){say(false,"两次输入的密码不一样");return;}
+    ES.register(n,p).then(function(r){
+      if(!r.ok){say(false,r.msg);return;}
+      say(true,"注册成功！欢迎你，"+r.user);
+      setTimeout(function(){location.href=back();},700);
+    });
+  }else{
+    ES.login(n,p).then(function(r){
+      if(!r.ok){say(false,r.msg);return;}
+      say(true,"登录成功！欢迎回来，"+r.user);
+      setTimeout(function(){location.href=back();},700);
+    });
+  }
+}
+qs("fpw").addEventListener("keydown",function(e){if(e.key==="Enter")submit();});
+qs("fpw2").addEventListener("keydown",function(e){if(e.key==="Enter")submit();});
+(function(){
+  var u=ES.user();
+  qs("nownow").innerHTML=u?('当前已登录：<b>'+ES.esc(u)+'</b> · <a href="#" id="lo" style="color:#b8878d;">退出</a>'):"";
+  if(u){qs("lo").onclick=function(e){e.preventDefault();ES.logout();location.reload();};mode("log");}
+})();
+</script>
+</body>
+</html>

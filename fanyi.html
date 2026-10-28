@@ -46,6 +46,7 @@
 <div id="app">
   <header><h1>符号<span class="dot">翻牌配对</span></h1><p>原理图符号 ↔ 元件名 · 翻开两张配成一对</p></header>
   <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+<div id="eschip"></div>
   <div class="lvbar">
     <button class="lv on" data-n="4">简单 4 对</button>
     <button class="lv" data-n="6">标准 6 对</button>
@@ -64,6 +65,7 @@
   <button class="btn" onclick="restart()">再来一局</button>
   <button class="btn" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
 </div></div>
+<script src="es.js"></script>
 <script>
 "use strict";
 function sym(p){return '<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" stroke="#4A4A4A" stroke-width="4" fill="none" stroke-linecap="round">'+p+'</svg>';}
@@ -160,6 +162,7 @@ function win(){
   if(isBest){try{localStorage.setItem(LSKEY(),JSON.stringify(cur));}catch(e){}}
   document.getElementById("winstat").textContent="步数 "+state.moves+" · 用时 "+state.sec+" 秒";
   document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?"最佳纪录："+best.m+" 步 / "+best.t+" 秒":"");
+  try{ES.record("fanyi",state.level*1000-state.moves*5-Math.min(state.sec,900)/10,state.level+" 对 · "+state.moves+" 步 · "+state.sec+" 秒");}catch(e){}
   document.getElementById("win").classList.add("on");
   beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);
 }
@@ -173,6 +176,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".lv"),function(b){
   });
 });
 newGame();
+try{ES.mountChip(document.getElementById("eschip"));}catch(e){}
 </script>
 </body>
 </html>

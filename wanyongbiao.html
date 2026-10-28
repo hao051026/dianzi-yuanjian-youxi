@@ -49,6 +49,7 @@
 <div id="app">
   <header><h1>万用表<span class="dot">快答</span></h1><p>选对档位，才不会烧表 · 10 题</p></header>
   <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+<div id="eschip"></div>
   <div id="hud">
     <span class="pill">第 <b id="hno">1</b>/<span id="htot">10</span> 题</span>
     <span class="pill">得分 <b id="hscore">0</b></span>
@@ -92,6 +93,7 @@
   <button class="btn" onclick="start()">再来一局</button>
   <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
 </div></div>
+<script src="es.js"></script>
 <script>
 "use strict";
 var QS=[
@@ -232,6 +234,7 @@ function showResult(){
   var isBest=state.score>best;
   if(isBest){try{localStorage.setItem("wan_best",String(state.score));}catch(e){}}
   document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?("最高分 "+best):"");
+  try{ES.record("wanyongbiao",state.score,"答对 "+state.right+"/"+total+" · "+state.score+" 分");}catch(e){}
   document.getElementById("win").classList.add("on");
   if(pct>=0.9){beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);}
 }
@@ -243,6 +246,7 @@ document.addEventListener("keydown",function(e){
   }
 });
 start();
+try{ES.mountChip(document.getElementById("eschip"));}catch(e){}
 </script>
 </body>
 </html>

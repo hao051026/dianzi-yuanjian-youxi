@@ -13,6 +13,9 @@
   header h1{font-size:28px;letter-spacing:3px;}
   header h1 .dot{color:var(--pink);}
   header p{font-size:13px;color:#9a8f8f;margin-top:6px;}
+  #userbar{text-align:center;margin-top:10px;font-size:14px;}
+  #userbar a{color:#b8878d;text-decoration:none;font-weight:bold;}
+  #userbar b{color:var(--ink);}
   .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:16px;margin-top:14px;}
   a.gbtn{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink);padding:14px 12px;border-radius:16px;background:linear-gradient(135deg,#FFFDFB,#FFF3F0);border:2px solid #FFF0EE;margin-top:10px;transition:all .15s;}
   a.gbtn:hover{border-color:var(--pink);transform:translateY(-1px);}
@@ -22,6 +25,17 @@
   a.gbtn .tx small{display:block;font-size:12px;color:#9a8f8f;margin-top:3px;line-height:1.5;}
   a.gbtn .tx em{display:block;font-style:normal;font-size:11px;color:#3CBF8E;margin-top:4px;}
   a.gbtn .go{flex:none;font-size:22px;color:var(--pink);font-weight:bold;}
+  h2.sec{font-size:17px;margin-bottom:4px;}
+  p.secsub{font-size:12px;color:#9a8f8f;margin-bottom:10px;}
+  .lb{margin-top:12px;border-top:1px dashed #F3DEDB;padding-top:10px;}
+  .lb h3{font-size:14px;margin-bottom:6px;}
+  .lb h3 .cnt{font-weight:normal;font-size:11px;color:#b8a9a9;}
+  .lb table{width:100%;border-collapse:collapse;font-size:13px;}
+  .lb td{padding:5px 4px;border-bottom:1px dashed #F6E3E1;}
+  .lb td.rk{width:34px;color:#b8878d;font-weight:bold;}
+  .lb td.sc{color:#177A54;font-weight:bold;text-align:right;}
+  .lb tr.me td{background:#FFF7E8;}
+  .lb .empty{font-size:12px;color:#b8a9a9;padding:4px 0;}
   .tip{margin-top:14px;font-size:12px;color:#7d7070;line-height:1.8;text-align:center;}
   .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;line-height:1.8;}
   .foot a{color:#b8878d;text-decoration:none;}
@@ -33,6 +47,7 @@
     <h1>电子社<span class="dot">小游戏厅</span> 🎮</h1>
     <p>电子制作社团 · 课堂配套小游戏 · 手机电脑都能玩</p>
   </header>
+  <div id="userbar"></div>
 
   <div class="card">
     <a class="gbtn" href="yuanjian.html">
@@ -62,27 +77,69 @@
     </a>
   </div>
 
-  <div class="tip">⌨️ 部分游戏支持数字键 1–4 快速作答<br>🏆 各游戏的最佳成绩会自动保存在本机</div>
+  <div class="card">
+    <h2 class="sec">🏆 排行榜</h2>
+    <p class="secsub">本机全部用户 · 每游戏取前 5 名 · 金色高亮是你自己</p>
+    <div id="lbwrap"></div>
+  </div>
+
+  <div class="tip">⌨️ 部分游戏支持数字键 1–4 快速作答<br>登录后每局成绩自动记在你名下</div>
 
   <div class="foot">电子社 2026 学年 · 动手拆一块板，比看十张图更有用<br><a href="https://github.com/hao051026/dianzi-yuanjian-youxi" target="_blank">GitHub 仓库</a></div>
 </div>
+<script src="es.js"></script>
 <script>
 "use strict";
-function ls(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
-function num(k){try{var v=localStorage.getItem(k);return v===null?null:parseInt(v,10);}catch(e){return null;}}
-document.getElementById("b1").textContent="三大模式 · 离线可玩";
-var fb=null,fl="";
-[4,6,8].forEach(function(n){
-  var b=ls("fanyi_best_"+n);
-  if(b&&(!fb||b.m<fb.m)){fb=b;fl=n+" 对";}
-});
-document.getElementById("b2").textContent=fb?("🏆 最佳："+fl+" · "+fb.m+" 步 / "+fb.t+" 秒"):"暂无纪录，来挑战";
-var hb=ls("hanjie_best");
-document.getElementById("b3").textContent=hb?("🏆 最佳：错 "+hb.e+" 次 · "+hb.t+" 秒"):"暂无纪录，来挑战";
-var wb=num("wan_best");
-document.getElementById("b4").textContent=wb!==null?("🏆 最高分 "+wb):"暂无纪录，来挑战";
-var ab=num("anquan_best");
-document.getElementById("b5").textContent=ab!==null?("🏆 最高分 "+ab):"暂无纪录，来挑战";
+var GAMES=[
+ {k:"yuanjian",n:"🔍 元件识别大作战"},
+ {k:"fanyi",n:"🃏 符号翻牌配对"},
+ {k:"hanjie",n:"🔧 流程排序挑战"},
+ {k:"wanyongbiao",n:"🎛️ 万用表快答"},
+ {k:"anquan",n:"🚦 安全红绿灯"}
+];
+(function(){
+  var u=ES.user();
+  var bar=document.getElementById("userbar");
+  if(u){
+    bar.innerHTML='👤 <b>'+ES.esc(u)+'</b>，欢迎回来！ · <a href="#" id="lo">退出登录</a>';
+    document.getElementById("lo").onclick=function(e){e.preventDefault();ES.logout();location.reload();};
+  }else{
+    bar.innerHTML='👤 还没有名字 · <a href="login.html">注册一个，成绩才能上排行榜</a>';
+  }
+  function lsJ(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
+  function num(k){try{var v=localStorage.getItem(k);return v===null?null:parseInt(v,10);}catch(e){return null;}}
+  var b1=num("yuanjian_best"); // yuanjian stores plain number? no—it doesn't store; show myBest only
+  document.getElementById("b1").textContent=ES.myBest("yuanjian")?("我的最佳："+ES.myBest("yuanjian").s):"三大模式 · 离线可玩";
+  var fb=null,fl="";
+  [4,6,8].forEach(function(n){var b=lsJ("fanyi_best_"+n);if(b&&(!fb||b.m<fb.m)){fb=b;fl=n+" 对";}});
+  var mf=ES.myBest("fanyi");
+  document.getElementById("b2").textContent=mf?("我的最佳："+mf.s):(fb?("访客纪录："+fl+" · "+fb.m+" 步 / "+fb.t+" 秒"):"暂无纪录，来挑战");
+  var hb=lsJ("hanjie_best"), mh=ES.myBest("hanjie");
+  document.getElementById("b3").textContent=mh?("我的最佳："+mh.s):(hb?("访客纪录：错 "+hb.e+" 次 · "+hb.t+" 秒"):"暂无纪录，来挑战");
+  var wb=num("wan_best"), mw=ES.myBest("wanyongbiao");
+  document.getElementById("b4").textContent=mw?("我的最佳："+mw.s):(wb!==null?("访客纪录：最高分 "+wb):"暂无纪录，来挑战");
+  var ab=num("anquan_best"), ma=ES.myBest("anquan");
+  document.getElementById("b5").textContent=ma?("我的最佳："+ma.s):(ab!==null?("访客纪录：最高分 "+ab):"暂无纪录，来挑战");
+
+  var wrap=document.getElementById("lbwrap");
+  var html="";
+  GAMES.forEach(function(g){
+    var top=ES.top(g.k,5);
+    html+='<div class="lb"><h3>'+g.n+' <span class="cnt">（'+top.length+' 条）</span></h3>';
+    if(!top.length){
+      html+='<div class="empty">还没有人上榜，先去玩一局！</div>';
+    }else{
+      html+='<table>';
+      top.forEach(function(e,i){
+        var me=(u&&e.u===u)?" class='me'":"";
+        html+='<tr'+me+'><td class="rk">'+(i+1)+'</td><td>'+ES.esc(e.u)+'</td><td class="sc">'+ES.esc(e.s)+'</td></tr>';
+      });
+      html+='</table>';
+    }
+    html+='</div>';
+  });
+  wrap.innerHTML=html;
+})();
 </script>
 </body>
 </html>

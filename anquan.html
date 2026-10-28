@@ -45,6 +45,7 @@
 <div id="app">
   <header><h1>安全<span class="dot">红绿灯</span></h1><p>这条操作是安全还是危险？快速判断 · 3 条命</p></header>
   <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+<div id="eschip"></div>
   <div id="hud">
     <span class="pill">第 <b id="hno">1</b>/<span id="htot">15</span> 条</span>
     <span class="pill">得分 <b id="hscore">0</b></span>
@@ -68,6 +69,7 @@
   <button class="btn" onclick="start()">再来一局</button>
   <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
 </div></div>
+<script src="es.js"></script>
 <script>
 "use strict";
 var POOL=[
@@ -192,10 +194,12 @@ function showResult(done){
   var isBest=state.score>best;
   if(isBest){try{localStorage.setItem("anquan_best",String(state.score));}catch(e){}}
   document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?("最高分 "+best):"");
+  try{ES.record("anquan",state.score,"得分 "+state.score+" · 剩 "+state.lives+" 命");}catch(e){}
   document.getElementById("win").classList.add("on");
   if(isBest){beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);}
 }
 start();
+try{ES.mountChip(document.getElementById("eschip"));}catch(e){}
 </script>
 </body>
 </html>

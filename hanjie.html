@@ -46,6 +46,7 @@
 <div id="app">
   <header><h1>流程<span class="dot">排序挑战</span></h1><p>把打乱的步骤按正确顺序点出来 · 3 个流程</p></header>
   <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+<div id="eschip"></div>
   <div id="hud">
     <span class="pill">流程 <b id="hf">1</b>/<span id="htot">3</span></span>
     <span class="pill">错误 <b id="he">0</b></span>
@@ -65,6 +66,7 @@
   <button class="btn" onclick="restart()">再来一局</button>
   <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
 </div></div>
+<script src="es.js"></script>
 <script>
 "use strict";
 var FLOWS=[
@@ -155,10 +157,12 @@ function finish(){
   if(isBest){try{localStorage.setItem("hanjie_best",JSON.stringify(cur));}catch(e){}}
   document.getElementById("winstat").textContent="错误 "+state.wrong+" 次 · 用时 "+state.sec+" 秒";
   document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?"最佳纪录：错 "+best.e+" 次 / "+best.t+" 秒":"");
+  try{ES.record("hanjie",10000-state.wrong*100-Math.min(state.sec,900),"错 "+state.wrong+" 次 · "+state.sec+" 秒");}catch(e){}
   document.getElementById("win").classList.add("on");
   beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);
 }
 start();
+try{ES.mountChip(document.getElementById("eschip"));}catch(e){}
 </script>
 </body>
 </html>
