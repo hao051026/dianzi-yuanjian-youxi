@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流程排序挑战 · 电子社</title>
+<style>
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:720px;padding:14px 14px 40px;}
+  header{text-align:center;padding:10px 0 2px;}
+  header h1{font-size:24px;letter-spacing:2px;}
+  header h1 .dot{color:var(--pink);}
+  header p{font-size:12px;color:#9a8f8f;margin-top:4px;}
+  .hubbar{text-align:center;margin-top:8px;}
+  .hubbar a{display:inline-block;background:#fff;border-radius:99px;padding:6px 16px;color:var(--ink);text-decoration:none;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  #hud{display:flex;gap:8px;justify-content:center;margin-top:12px;font-size:14px;flex-wrap:wrap;}
+  #hud .pill{background:#fff;border-radius:99px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  #hud .pill b{color:var(--pink);}
+  .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:18px;margin-top:14px;}
+  #ftitle{font-size:19px;}
+  #fhint{font-size:12px;color:#9a8f8f;margin:4px 0 12px;}
+  #slots{display:flex;flex-direction:column;gap:8px;}
+  .slot{display:flex;gap:10px;align-items:center;border:2px dashed #F3DEDB;border-radius:12px;padding:8px 12px;min-height:44px;font-size:14px;}
+  .slot .no{flex:none;width:24px;height:24px;border-radius:99px;background:var(--pinkbg);color:var(--pink);font-weight:bold;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .slot.filled{border:2px solid #7DCEC8;background:#EAF7F5;}
+  .slot.filled .no{background:var(--teal);color:#fff;}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .chip{border:2px solid #F6DCDA;background:#fff;border-radius:99px;padding:9px 16px;font-size:14px;font-family:inherit;color:var(--ink);cursor:pointer;transition:all .12s;}
+  .chip:hover{border-color:var(--pink);}
+  .chip.done{display:none;}
+  .chip.shake{animation:shk .3s;border-color:#E5737C;background:#FDEBEC;}
+  @keyframes shk{25%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-family:inherit;color:#fff;background:var(--pink);cursor:pointer;margin-top:14px;}
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid #FFE4E1;}
+  #win{position:fixed;inset:0;background:rgba(74,74,74,.45);display:none;align-items:center;justify-content:center;padding:20px;}
+  #win.on{display:flex;}
+  #winbox{background:#fff;border-radius:18px;padding:26px;text-align:center;max-width:340px;width:100%;}
+  #winbox h2{font-size:22px;margin-bottom:8px;}
+  #winbox p{font-size:14px;color:#7d7070;line-height:1.8;}
+  .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>流程<span class="dot">排序挑战</span></h1><p>把打乱的步骤按正确顺序点出来 · 3 个流程</p></header>
+  <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+  <div id="hud">
+    <span class="pill">流程 <b id="hf">1</b>/<span id="htot">3</span></span>
+    <span class="pill">错误 <b id="he">0</b></span>
+    <span class="pill">用时 <b id="hs">0</b>″</span>
+  </div>
+  <div class="card">
+    <h2 id="ftitle"></h2>
+    <p id="fhint"></p>
+    <div id="slots"></div>
+    <div id="chips"></div>
+  </div>
+  <button class="btn ghost" onclick="restart()">↺ 重开一局</button>
+  <div class="foot">电子社 2026 学年 · 手熟于心，流程不乱</div>
+</div>
+<div id="win"><div id="winbox">
+  <h2>🏁 流程全部完成！</h2><p id="winstat"></p><p id="winbest"></p>
+  <button class="btn" onclick="restart()">再来一局</button>
+  <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
+</div></div>
+<script>
+"use strict";
+var FLOWS=[
+ {title:"直插焊接五步法",hint:"预热到位，撤离有序——好焊点是一套节奏。",
+  steps:["烙铁头同时贴住焊盘与引脚，预热约 1 秒","把焊锡丝送到焊盘与引脚的交界处","熔锡约 2 秒，形成包住引脚的小丘","先撤走焊锡丝","再撤走烙铁，让焊点静置凝固"]},
+ {title:"通电前检查流程",hint:"宁可慢十步，不可错一步。",
+  steps:["目视检查焊点：有无桥连、虚焊、锡珠","通断档检查电源正负极之间是否短路","核对 LED、电解电容等有极性元件的方向","确认电池电压正常后装入电池座","通电观察，出现异常立即断电"]},
+ {title:"圣诞树不亮排查",hint:"从电源到负载，从简单到复杂。",
+  steps:["先量电池电压是否正常","检查 LED 是否装反（长脚为正）","排查焊点虚焊，补锡重焊","检查有无短路点，清除桥连","重新通电测试"]},
+ {title:"课堂实操四步",hint:"清点、插装、焊接、验收，一步不缺。",
+  steps:["对照 BOM 清点元件，缺件报备","按丝印位号插装元件，注意极性","先焊对角两点固定，再焊其余","自检焊点后交助教验收"]}
+];
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var AC=null;
+function beep(f,d,type){
+  try{
+    if(!AC){var C=window.AudioContext||window.webkitAudioContext;AC=new C();}
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"sine";o.frequency.value=f;
+    g.gain.setValueAtTime(.12,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g);g.connect(AC.destination);
+    o.start();o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+var state={qs:[],qi:0,next:0,wrong:0,sec:0,timer:null};
+function hud(){
+  document.getElementById("hf").textContent=Math.min(state.qi+1,state.qs.length);
+  document.getElementById("he").textContent=state.wrong;
+  document.getElementById("hs").textContent=state.sec;
+}
+function restart(){start();}
+function start(){
+  state.qs=shuffle(FLOWS.slice()).slice(0,3);
+  state.qi=0;state.wrong=0;state.sec=0;state.next=0;
+  if(state.timer)clearInterval(state.timer);
+  state.timer=setInterval(function(){state.sec++;hud();},1000);
+  document.getElementById("htot").textContent=state.qs.length;
+  document.getElementById("win").classList.remove("on");
+  loadFlow();hud();
+}
+function loadFlow(){
+  var f=state.qs[state.qi];state.next=0;
+  document.getElementById("ftitle").textContent=f.title;
+  document.getElementById("fhint").textContent=f.hint;
+  var slots=document.getElementById("slots");slots.innerHTML="";
+  f.steps.forEach(function(s,i){
+    var d=document.createElement("div");d.className="slot";
+    d.innerHTML='<span class="no">'+(i+1)+'</span><span class="st"></span>';
+    slots.appendChild(d);
+  });
+  var chips=document.getElementById("chips");chips.innerHTML="";
+  shuffle(f.steps.map(function(s,i){return {s:s,i:i};})).forEach(function(o){
+    var b=document.createElement("button");
+    b.className="chip";b.textContent=o.s;b.setAttribute("data-i",o.i);
+    b.onclick=function(){pick(b,o.i);};
+    chips.appendChild(b);
+  });
+}
+function pick(b,i){
+  var f=state.qs[state.qi];
+  if(i===state.next){
+    b.classList.add("done");b.disabled=true;
+    var slot=document.querySelectorAll(".slot")[state.next];
+    var st=slot.querySelector(".st");if(st)st.textContent=b.textContent;
+    slot.classList.add("filled");
+    state.next++;
+    beep(880,.08);
+    if(state.next===f.steps.length){
+      beep(660,.1);setTimeout(function(){beep(990,.15);},100);
+      state.qi++;
+      if(state.qi>=state.qs.length){finish();}
+      else{setTimeout(loadFlow,1100);}
+    }
+  }else{
+    state.wrong++;hud();
+    b.classList.add("shake");
+    setTimeout(function(){b.classList.remove("shake");},350);
+    beep(200,.18,"square");
+  }
+}
+function finish(){
+  clearInterval(state.timer);
+  var best=null;
+  try{best=JSON.parse(localStorage.getItem("hanjie_best")||"null");}catch(e){}
+  var cur={e:state.wrong,t:state.sec};
+  var isBest=!best||cur.e<best.e||(cur.e===best.e&&cur.t<best.t);
+  if(isBest){try{localStorage.setItem("hanjie_best",JSON.stringify(cur));}catch(e){}}
+  document.getElementById("winstat").textContent="错误 "+state.wrong+" 次 · 用时 "+state.sec+" 秒";
+  document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?"最佳纪录：错 "+best.e+" 次 / "+best.t+" 秒":"");
+  document.getElementById("win").classList.add("on");
+  beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);
+}
+start();
+</script>
+</body>
+</html>

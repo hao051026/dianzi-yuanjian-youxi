@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万用表快答 · 电子社</title>
+<style>
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:720px;padding:14px 14px 40px;}
+  header{text-align:center;padding:10px 0 2px;}
+  header h1{font-size:24px;letter-spacing:2px;}
+  header h1 .dot{color:var(--pink);}
+  header p{font-size:12px;color:#9a8f8f;margin-top:4px;}
+  .hubbar{text-align:center;margin-top:8px;}
+  .hubbar a{display:inline-block;background:#fff;border-radius:99px;padding:6px 16px;color:var(--ink);text-decoration:none;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  #hud{display:flex;gap:8px;justify-content:center;margin-top:12px;font-size:14px;flex-wrap:wrap;}
+  #hud .pill{background:#fff;border-radius:99px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  #hud .pill b{color:var(--pink);}
+  #timerwrap{height:8px;border-radius:99px;background:#F3DEDB;margin-top:10px;overflow:hidden;}
+  #tbar{height:100%;width:100%;background:linear-gradient(90deg,var(--teal),var(--pink));border-radius:99px;}
+  .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:16px;margin-top:14px;}
+  #meter svg{width:100%;max-width:380px;height:auto;display:block;margin:0 auto;}
+  #qtext{font-size:19px;font-weight:bold;text-align:center;padding:16px 8px;line-height:1.6;}
+  #qtext .tag{display:inline-block;font-size:12px;font-weight:normal;color:#fff;background:var(--blue);border-radius:99px;padding:2px 10px;margin-bottom:8px;}
+  #opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+  @media (max-width:520px){#opts{grid-template-columns:1fr;}}
+  .opt{border:2px solid #F6DCDA;background:#fff;border-radius:14px;padding:13px 10px;font-size:15px;font-family:inherit;color:var(--ink);cursor:pointer;transition:all .12s;}
+  .opt:hover{border-color:var(--pink);}
+  .opt.correct{background:#E4F7F0;border-color:#3CBF8E;color:#177A54;font-weight:bold;}
+  .opt.wrong{background:#FDEBEC;border-color:#E5737C;color:#B03A45;}
+  .opt:disabled{cursor:default;}
+  #feedback{display:none;margin-top:12px;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7;}
+  #feedback.ok{background:#E4F7F0;color:#177A54;}
+  #feedback.no{background:#FDEBEC;color:#8F2F39;}
+  #feedback .go{font-size:12px;opacity:.75;margin-top:4px;}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-family:inherit;color:#fff;background:var(--pink);cursor:pointer;margin-top:14px;}
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid #FFE4E1;}
+  #win{position:fixed;inset:0;background:rgba(74,74,74,.45);display:none;align-items:center;justify-content:center;padding:20px;}
+  #win.on{display:flex;}
+  #winbox{background:#fff;border-radius:18px;padding:26px;text-align:center;max-width:340px;width:100%;}
+  #winbox h2{font-size:22px;margin-bottom:8px;}
+  #winbox p{font-size:14px;color:#7d7070;line-height:1.8;}
+  .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>万用表<span class="dot">快答</span></h1><p>选对档位，才不会烧表 · 10 题</p></header>
+  <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+  <div id="hud">
+    <span class="pill">第 <b id="hno">1</b>/<span id="htot">10</span> 题</span>
+    <span class="pill">得分 <b id="hscore">0</b></span>
+    <span class="pill">连击 <b id="hstreak">0</b></span>
+  </div>
+  <div id="timerwrap"><div id="tbar"></div></div>
+  <div class="card">
+    <div id="meter">
+      <svg viewBox="0 0 300 215" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="8" width="270" height="198" rx="26" fill="#FFF9F6" stroke="#E8C9C5" stroke-width="3"/>
+        <rect x="34" y="26" width="150" height="46" rx="8" fill="#EAF7F5" stroke="#BBD8D4" stroke-width="2"/>
+        <text id="lcd" x="109" y="57" font-size="19" text-anchor="middle" fill="#177A54" font-family="Arial">READY</text>
+        <circle cx="205" cy="112" r="48" fill="#fff" stroke="#E8C9C5" stroke-width="3"/>
+        <text x="205" y="52" font-size="12" text-anchor="middle" fill="#9a8f8f">OFF</text>
+        <text x="252" y="74" font-size="12" text-anchor="middle" fill="#9a8f8f">V~</text>
+        <text x="256" y="118" font-size="12" text-anchor="middle" fill="#9a8f8f">V=</text>
+        <text x="252" y="162" font-size="12" text-anchor="middle" fill="#9a8f8f">Ω</text>
+        <text x="158" y="162" font-size="12" text-anchor="middle" fill="#9a8f8f">A</text>
+        <text x="154" y="74" font-size="12" text-anchor="middle" fill="#9a8f8f">.o</text>
+        <g id="knob" transform="rotate(0 205 112)">
+          <line x1="205" y1="112" x2="205" y2="72" stroke="#4A4A4A" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="205" cy="112" r="10" fill="#FF9AA0"/>
+        </g>
+        <circle cx="95" cy="150" r="10" fill="#3a3a3a"/>
+        <circle cx="140" cy="150" r="10" fill="#d94141"/>
+        <text x="95" y="180" font-size="11" text-anchor="middle" fill="#9a8f8f">COM</text>
+        <text x="140" y="180" font-size="11" text-anchor="middle" fill="#9a8f8f">VΩmA</text>
+        <line x1="60" y1="196" x2="80" y2="196" stroke="#8d8d8d" stroke-width="4" stroke-linecap="round"/>
+        <line x1="220" y1="196" x2="240" y2="196" stroke="#d94141" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div id="qtext"></div>
+    <div id="opts"></div>
+    <div id="feedback"></div>
+  </div>
+  <button class="btn ghost" onclick="goHome()">✕ 放弃本局</button>
+  <div class="foot">电子社 2026 学年 · 档位错一步，仪表伤一路</div>
+</div>
+<div id="win"><div id="winbox">
+  <h2 id="rtitle"></h2><p id="winstat"></p><p id="winbest"></p>
+  <button class="btn" onclick="start()">再来一局</button>
+  <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
+</div></div>
+<script>
+"use strict";
+var QS=[
+ {q:"测一节 1.5V 干电池的电压",ok:"直流电压档（20V）",no:["交流电压档（750V）","电阻档","通断档"],why:"电池输出直流电；电压档并联在电池两端测量。"},
+ {q:"测家里插座的 220V 电压",ok:"交流电压档（750V）",no:["直流电压档（20V）","电流档","二极管档"],why:"市电是 220V 交流电；务必注意安全，手不碰表笔金属部分。"},
+ {q:"判断一根导线有没有断芯",ok:"通断档",no:["直流电压档","二极管档","关档 OFF"],why:"通断档有蜂鸣：响 = 导线完好，不响 = 断芯。"},
+ {q:"读出一只色环电阻的实际阻值",ok:"电阻档",no:["通断档","直流电压档","二极管档"],why:"电阻档直接读数；测量前必须给电路断电。"},
+ {q:"分辨 LED 哪只脚是正极",ok:"二极管档",no:["电阻档","通断档","交流电压档"],why:"二极管档红笔接正极会导通，LED 会微微发亮。"},
+ {q:"测量流过电路的电流大小",ok:"电流档（串联进电路）",no:["电压档（并联在两端）","电阻档","通断档"],why:"电流档必须串联进电路；红表笔换到 10A 或 mA 孔。"},
+ {q:"检查保险丝有没有熔断",ok:"通断档",no:["直流电压档","二极管档","关档 OFF"],why:"蜂鸣响 = 保险丝完好，不响 = 已熔断。"},
+ {q:"不确定被测电压大概多大，量程怎么选",ok:"先选最大量程，再逐步调小",no:["从最小量程开始试","随便选一个量程","改用电流档测"],why:"先大量程防止打表，再逐步换小量程提高精度。"},
+ {q:"万用表用完了，档位拨到哪里",ok:"关档 OFF",no:["留在电阻档","留在通断档","留在电压档"],why:"拨回关档省电，也避免下次拿起就误测。"},
+ {q:"判断一只二极管的好坏",ok:"二极管档测正反向",no:["只测正向导通","电阻档测一次","通断档测一次"],why:"正向导通、反向截止才是好管；只测一边会误判。"},
+ {q:"黑表笔应该插在哪个孔",ok:"COM 孔",no:["VΩmA 孔","10A 孔","哪个孔都行"],why:"黑表笔固定插 COM；红表笔按测量对象换孔。"},
+ {q:"测电阻之前必须先做什么",ok:"给电路断电",no:["把两支表笔短路","先拨到电流档","给万用表换新电池"],why:"带电测电阻读数全错，还可能损坏仪表。"}
+];
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var AC=null;
+function beep(f,d,type){
+  try{
+    if(!AC){var C=window.AudioContext||window.webkitAudioContext;AC=new C();}
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"sine";o.frequency.value=f;
+    g.gain.setValueAtTime(.12,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g);g.connect(AC.destination);
+    o.start();o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+var state={qs:[],qi:0,score:0,streak:0,right:0,timer:null,tLeft:0,locked:false};
+var TIME=12;
+function goHome(){
+  if(state.timer)clearInterval(state.timer);
+  var hud=document.getElementById("hud");
+  location.href="index.html";
+}
+function start(){
+  state.qs=shuffle(QS.slice()).slice(0,10);
+  state.qi=0;state.score=0;state.streak=0;state.right=0;state.locked=false;
+  document.getElementById("htot").textContent=state.qs.length;
+  document.getElementById("win").classList.remove("on");
+  render();
+}
+function setLCD(s,color){
+  var t=document.getElementById("lcd");
+  t.textContent=s;
+  if(color)t.setAttribute("fill",color);
+}
+function knobWiggle(){
+  var k=document.getElementById("knob");
+  var a=Math.round(-120+Math.random()*240);
+  k.setAttribute("transform","rotate("+a+" 205 112)");
+}
+function runTimer(){
+  if(state.timer)clearInterval(state.timer);
+  state.tLeft=TIME;
+  var bar=document.getElementById("tbar");
+  bar.style.width="100%";
+  bar.style.background="linear-gradient(90deg,#7DCEC8,#FF9AA0)";
+  state.timer=setInterval(function(){
+    state.tLeft-=0.1;
+    bar.style.width=Math.max(0,state.tLeft/TIME*100)+"%";
+    if(state.tLeft<=5){bar.style.background="#E5737C";}
+    if(state.tLeft<=0){clearInterval(state.timer);state.timer=null;onAnswer(-1);}
+  },100);
+}
+function render(){
+  state.locked=false;
+  var fb=document.getElementById("feedback");fb.style.display="none";fb.className="";fb.id="feedback";
+  var q=state.qs[state.qi];
+  document.getElementById("hno").textContent=state.qi+1;
+  document.getElementById("hscore").textContent=state.score;
+  document.getElementById("hstreak").textContent=state.streak;
+  document.getElementById("qtext").innerHTML='<span class="tag">选档位</span><br>'+q.q;
+  setLCD("Q"+(state.qi+1),"#177A54");
+  knobWiggle();
+  var opts=document.getElementById("opts");opts.innerHTML="";
+  var options=shuffle([q.ok].concat(q.no.slice(0,3)));
+  q._ok=q.ok;
+  options.forEach(function(name,idx){
+    var b=document.createElement("button");
+    b.className="opt";b.textContent=name;
+    b.onclick=function(){onAnswer(idx);};
+    opts.appendChild(b);
+  });
+  runTimer();
+}
+function onAnswer(idx){
+  if(state.locked)return;
+  state.locked=true;
+  if(state.timer){clearInterval(state.timer);state.timer=null;}
+  var q=state.qs[state.qi];
+  var btns=document.querySelectorAll(".opt");
+  var chosen=idx>=0&&btns[idx]?btns[idx].textContent:null;
+  var ok=chosen===q._ok;
+  for(var i=0;i<btns.length;i++){
+    btns[i].disabled=true;
+    if(btns[i].textContent===q._ok)btns[i].classList.add("correct");
+    else if(i===idx)btns[i].classList.add("wrong");
+  }
+  var fb=document.getElementById("feedback");
+  if(ok){
+    state.streak++;state.right++;
+    var gain=10+Math.min(state.streak-1,5)*2;
+    state.score+=gain;
+    setLCD("OK","#177A54");
+    fb.classList.add("ok");
+    fb.innerHTML="✅ 答对！+"+gain+" 分"+(state.streak>1?"（连击 ×"+state.streak+"）":"")+"<br>💡 "+q.why;
+    fb.style.display="block";
+    beep(880,.12);setTimeout(function(){beep(1320,.15);},90);
+    document.getElementById("hscore").textContent=state.score;
+    document.getElementById("hstreak").textContent=state.streak;
+    setTimeout(next,1000);
+  }else{
+    state.streak=0;
+    setLCD("ERR","#B03A45");
+    fb.classList.add("no");
+    fb.innerHTML=(chosen?"❌ 选错啦。":"⏰ 时间到！")+"正确答案："+q._ok+"<br>💡 "+q.why+'<div class="go">点击此处继续</div>';
+    fb.style.display="block";
+    beep(220,.25,"square");
+    document.getElementById("hstreak").textContent=0;
+    var un=function(){fb.removeEventListener("click",un);next();};
+    setTimeout(function(){fb.addEventListener("click",un);},350);
+  }
+}
+function next(){
+  state.qi++;
+  if(state.qi>=state.qs.length){showResult();}
+  else{render();}
+}
+function showResult(){
+  var total=state.qs.length,pct=state.right/total;
+  var title=pct>=0.9?"档位大师！":(pct>=0.7?"手很稳":(pct>=0.5?"再练练":"先看看口诀"));
+  document.getElementById("rtitle").textContent=title;
+  document.getElementById("winstat").textContent="答对 "+state.right+"/"+total+" · 得分 "+state.score;
+  var best=null;
+  try{best=parseInt(localStorage.getItem("wan_best")||"0",10);}catch(e){best=0;}
+  var isBest=state.score>best;
+  if(isBest){try{localStorage.setItem("wan_best",String(state.score));}catch(e){}}
+  document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?("最高分 "+best):"");
+  document.getElementById("win").classList.add("on");
+  if(pct>=0.9){beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);}
+}
+document.addEventListener("keydown",function(e){
+  var n=parseInt(e.key,10);
+  if(n>=1&&n<=4){
+    var btns=document.querySelectorAll(".opt");
+    if(btns[n-1]&&!btns[n-1].disabled)btns[n-1].click();
+  }
+});
+start();
+</script>
+</body>
+</html>

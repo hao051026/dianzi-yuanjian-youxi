@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>符号翻牌配对 · 电子社</title>
+<style>
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:760px;padding:14px 14px 40px;}
+  header{text-align:center;padding:10px 0 2px;}
+  header h1{font-size:24px;letter-spacing:2px;}
+  header h1 .dot{color:var(--pink);}
+  header p{font-size:12px;color:#9a8f8f;margin-top:4px;}
+  .hubbar{text-align:center;margin-top:8px;}
+  .hubbar a{display:inline-block;background:#fff;border-radius:99px;padding:6px 16px;color:var(--ink);text-decoration:none;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .lvbar{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+  .lv{border:2px solid #F6DCDA;background:#fff;border-radius:99px;padding:7px 16px;font-size:14px;font-family:inherit;color:var(--ink);cursor:pointer;}
+  .lv.on{background:var(--pink);color:#fff;border-color:var(--pink);font-weight:bold;}
+  #hud{display:flex;gap:8px;justify-content:center;margin-top:12px;font-size:14px;flex-wrap:wrap;}
+  #hud .pill{background:#fff;border-radius:99px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  #hud .pill b{color:var(--pink);}
+  #grid{display:grid;gap:10px;margin-top:14px;grid-template-columns:repeat(4,1fr);}
+  .card{aspect-ratio:3/2;perspective:600px;cursor:pointer;}
+  .inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s;}
+  .card.flip .inner,.card.done .inner{transform:rotateY(180deg);}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+  .back{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-size:30px;font-weight:bold;}
+  .front{background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.08);transform:rotateY(180deg);padding:4px;}
+  .front svg{width:92%;height:92%;}
+  .front .nm{font-size:16px;font-weight:bold;}
+  .card.done .front{outline:3px solid #3CBF8E;outline-offset:-3px;}
+  .card.shake{animation:shk .3s;}
+  @keyframes shk{25%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
+  #win{position:fixed;inset:0;background:rgba(74,74,74,.45);display:none;align-items:center;justify-content:center;padding:20px;}
+  #win.on{display:flex;}
+  #winbox{background:#fff;border-radius:18px;padding:26px;text-align:center;max-width:340px;width:100%;}
+  #winbox h2{font-size:22px;margin-bottom:8px;}
+  #winbox p{font-size:14px;color:#7d7070;line-height:1.8;}
+  #winbox .btn{display:block;width:100%;border:none;border-radius:14px;padding:13px;font-size:16px;font-family:inherit;color:#fff;background:var(--pink);cursor:pointer;margin-top:14px;}
+  .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>符号<span class="dot">翻牌配对</span></h1><p>原理图符号 ↔ 元件名 · 翻开两张配成一对</p></header>
+  <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+  <div class="lvbar">
+    <button class="lv on" data-n="4">简单 4 对</button>
+    <button class="lv" data-n="6">标准 6 对</button>
+    <button class="lv" data-n="8">挑战 8 对</button>
+  </div>
+  <div id="hud">
+    <span class="pill">配对 <b id="hp">0</b>/<span id="ht">4</span></span>
+    <span class="pill">步数 <b id="hm">0</b></span>
+    <span class="pill">用时 <b id="hs">0</b>″</span>
+  </div>
+  <div id="grid"></div>
+  <div class="foot">电子社 2026 学年 · 电路符号是工程师的通用语言</div>
+</div>
+<div id="win"><div id="winbox">
+  <h2>🎉 全部配对成功！</h2><p id="winstat"></p><p id="winbest"></p>
+  <button class="btn" onclick="restart()">再来一局</button>
+  <button class="btn" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
+</div></div>
+<script>
+"use strict";
+function sym(p){return '<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" stroke="#4A4A4A" stroke-width="4" fill="none" stroke-linecap="round">'+p+'</svg>';}
+var PARTS=[
+ {id:"res",name:"电阻",svg:sym('<line x1="10" y1="50" x2="30" y2="50"/><polyline points="30,50 40,30 52,70 64,30 76,70 88,30 100,70 112,30 124,70 136,30 146,50"/><line x1="146" y1="50" x2="190" y2="50"/>')},
+ {id:"cap",name:"电容",svg:sym('<line x1="10" y1="50" x2="88" y2="50"/><line x1="88" y1="22" x2="88" y2="78"/><line x1="112" y1="22" x2="112" y2="78"/><line x1="112" y1="50" x2="190" y2="50"/>')},
+ {id:"ind",name:"电感",svg:sym('<line x1="10" y1="55" x2="34" y2="55"/><path d="M34 55 a14 14 0 0 1 28 0 a14 14 0 0 1 28 0 a14 14 0 0 1 28 0 a14 14 0 0 1 28 0"/><line x1="146" y1="55" x2="190" y2="55"/>')},
+ {id:"dio",name:"二极管",svg:sym('<line x1="10" y1="50" x2="70" y2="50"/><polygon points="70,25 70,75 112,50" fill="#4A4A4A"/><line x1="112" y1="25" x2="112" y2="78"/><line x1="112" y1="50" x2="190" y2="50"/>')},
+ {id:"led",name:"LED",svg:sym('<line x1="10" y1="50" x2="60" y2="50"/><polygon points="60,25 60,75 102,50" fill="#4A4A4A"/><line x1="102" y1="25" x2="102" y2="78"/><line x1="102" y1="50" x2="190" y2="50"/><line x1="112" y1="30" x2="142" y2="10"/><polygon points="148,6 136,12 144,18" fill="#4A4A4A"/><line x1="128" y1="46" x2="158" y2="26"/><polygon points="164,22 152,28 160,34" fill="#4A4A4A"/>')},
+ {id:"tr",name:"三极管",svg:sym('<circle cx="102" cy="50" r="30"/><line x1="10" y1="50" x2="88" y2="50"/><line x1="88" y1="32" x2="88" y2="68"/><line x1="88" y1="42" x2="124" y2="16"/><line x1="124" y1="16" x2="124" y2="5"/><line x1="88" y1="58" x2="124" y2="84"/><line x1="124" y1="84" x2="124" y2="95"/><polygon points="116,76 130,80 124,68" fill="#4A4A4A"/>')},
+ {id:"gnd",name:"接地",svg:sym('<line x1="100" y1="8" x2="100" y2="42"/><line x1="64" y1="42" x2="136" y2="42"/><line x1="76" y1="58" x2="124" y2="58"/><line x1="88" y1="74" x2="112" y2="74"/>')},
+ {id:"bat",name:"电池",svg:sym('<line x1="10" y1="50" x2="82" y2="50"/><line x1="82" y1="24" x2="82" y2="76"/><line x1="96" y1="36" x2="96" y2="64"/><line x1="96" y1="50" x2="190" y2="50"/><text x="70" y="18" font-size="16" fill="#4A4A4A" stroke="none">+</text>')}
+];
+function part(id){for(var i=0;i<PARTS.length;i++){if(PARTS[i].id===id)return PARTS[i];}return null;}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var AC=null;
+function beep(f,d,type){
+  try{
+    if(!AC){var C=window.AudioContext||window.webkitAudioContext;AC=new C();}
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"sine";o.frequency.value=f;
+    g.gain.setValueAtTime(.12,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g);g.connect(AC.destination);
+    o.start();o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+var state={level:4,deck:[],first:null,lock:false,found:0,moves:0,sec:0,timer:null,started:false};
+function LSKEY(){return "fanyi_best_"+state.level;}
+function buildDeck(n){
+  var ids=shuffle(PARTS.map(function(p){return p.id;})).slice(0,n);
+  var d=[];
+  ids.forEach(function(id){
+    var p=part(id);
+    d.push({id:id,kind:"sym",html:p.svg});
+    d.push({id:id,kind:"name",html:'<span class="nm">'+p.name+'</span>'});
+  });
+  return shuffle(d);
+}
+function upd(){
+  document.getElementById("hp").textContent=state.found;
+  document.getElementById("hm").textContent=state.moves;
+  document.getElementById("hs").textContent=state.sec;
+}
+function restart(){newGame();}
+function newGame(){
+  state.first=null;state.lock=false;state.found=0;state.moves=0;state.sec=0;state.started=false;
+  if(state.timer){clearInterval(state.timer);state.timer=null;}
+  state.deck=buildDeck(state.level);
+  document.getElementById("win").classList.remove("on");
+  document.getElementById("ht").textContent=state.level;
+  var g=document.getElementById("grid");g.innerHTML="";
+  state.deck.forEach(function(c,i){
+    var d=document.createElement("div");
+    d.className="card";
+    d.innerHTML='<div class="inner"><div class="face back">?</div><div class="face front">'+c.html+'</div></div>';
+    d.addEventListener("click",function(){flip(d,c);});
+    g.appendChild(d);
+  });
+  upd();
+}
+function flip(el,c){
+  if(state.lock||el.classList.contains("flip")||el.classList.contains("done"))return;
+  if(!state.started){
+    state.started=true;
+    state.timer=setInterval(function(){state.sec++;upd();},1000);
+  }
+  el.classList.add("flip");
+  if(!state.first){state.first={el:el,c:c};return;}
+  state.moves++;upd();
+  var a=state.first;state.first=null;
+  if(a.c.id===c.id&&a.c.kind!==c.kind){
+    a.el.classList.remove("flip");el.classList.remove("flip");
+    a.el.classList.add("done");el.classList.add("done");
+    state.found++;upd();
+    beep(880,.1);setTimeout(function(){beep(1320,.12);},80);
+    if(state.found===state.level){win();}
+  }else{
+    state.lock=true;
+    beep(220,.2,"square");
+    a.el.classList.add("shake");el.classList.add("shake");
+    setTimeout(function(){
+      a.el.classList.remove("flip","shake");el.classList.remove("flip","shake");
+      state.lock=false;
+    },700);
+  }
+}
+function win(){
+  if(state.timer){clearInterval(state.timer);state.timer=null;}
+  var best=null;
+  try{best=JSON.parse(localStorage.getItem(LSKEY())||"null");}catch(e){}
+  var cur={m:state.moves,t:state.sec};
+  var isBest=!best||cur.m<best.m||(cur.m===best.m&&cur.t<best.t);
+  if(isBest){try{localStorage.setItem(LSKEY(),JSON.stringify(cur));}catch(e){}}
+  document.getElementById("winstat").textContent="步数 "+state.moves+" · 用时 "+state.sec+" 秒";
+  document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?"最佳纪录："+best.m+" 步 / "+best.t+" 秒":"");
+  document.getElementById("win").classList.add("on");
+  beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);
+}
+Array.prototype.forEach.call(document.querySelectorAll(".lv"),function(b){
+  b.addEventListener("click",function(){
+    var on=document.querySelector(".lv.on");
+    if(on)on.classList.remove("on");
+    b.classList.add("on");
+    state.level=parseInt(b.getAttribute("data-n"),10);
+    newGame();
+  });
+});
+newGame();
+</script>
+</body>
+</html>

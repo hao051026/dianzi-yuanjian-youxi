@@ -3,479 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>元件识别大作战 · 电子社</title>
+<title>电子社小游戏厅</title>
 <style>
-  :root{
-    --pink:#FF9AA0; --pinkbg:#FFE4E1; --teal:#7DCEC8; --peach:#FDDBBF;
-    --blue:#A2BCF6; --ink:#4A4A4A; --card:#FFFFFF;
-  }
-  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
-  body{
-    font-family:"Microsoft YaHei","微软雅黑",sans-serif;
-    background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);
-    color:var(--ink); min-height:100vh; display:flex; justify-content:center;
-  }
-  #app{width:100%; max-width:720px; padding:16px 16px 40px;}
-  header{text-align:center; padding:14px 0 6px;}
-  header h1{font-size:26px; letter-spacing:2px;}
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:720px;padding:18px 16px 40px;}
+  header{text-align:center;padding:14px 0 4px;}
+  header h1{font-size:28px;letter-spacing:3px;}
   header h1 .dot{color:var(--pink);}
-  header p{font-size:12px; color:#9a8f8f; margin-top:4px;}
-  .screen{display:none;}
-  .screen.on{display:block; animation:fade .25s ease;}
-  @keyframes fade{from{opacity:0; transform:translateY(8px);}to{opacity:1;}}
-  .card{background:var(--card); border-radius:18px; box-shadow:0 6px 22px rgba(255,154,160,.18); padding:18px; margin-top:14px;}
-  .btn{
-    display:block; width:100%; border:none; border-radius:14px; padding:15px 12px;
-    font-size:17px; font-family:inherit; color:#fff; background:var(--pink);
-    cursor:pointer; margin-top:12px; transition:transform .08s, filter .15s;
-  }
-  .btn:active{transform:scale(.97);}
-  .btn:hover{filter:brightness(1.05);}
-  .btn.teal{background:var(--teal);}
-  .btn.blue{background:#8FA9EE;}
-  .btn.ghost{background:#fff; color:var(--ink); border:2px solid var(--pinkbg);}
-  .btn small{display:block; font-size:12px; opacity:.85; margin-top:3px; font-weight:normal;}
-  .home-grid .mode-ico{font-size:30px; margin-right:6px;}
-  #hud{display:flex; gap:8px; align-items:center; margin-top:14px; font-size:14px;}
-  #hud .pill{background:#fff; border-radius:99px; padding:6px 14px; box-shadow:0 2px 8px rgba(0,0,0,.06);}
-  #hud .pill b{color:var(--pink);}
-  #hud .spacer{flex:1;}
-  #timerwrap{height:8px; border-radius:99px; background:#F3DEDB; margin-top:10px; overflow:hidden;}
-  #tbar{height:100%; width:100%; background:linear-gradient(90deg,var(--teal),var(--pink)); border-radius:99px;}
-  #qstage{background:linear-gradient(180deg,#FFFDFB,#FFF3F0); border-radius:16px; padding:10px; margin-top:14px; text-align:center;}
-  #qsvg svg{width:100%; max-width:420px; height:auto;}
-  #qtext{font-size:19px; font-weight:bold; line-height:1.6; padding:26px 14px;}
-  #qtext .tag{display:inline-block; font-size:12px; font-weight:normal; color:#fff; background:var(--blue); border-radius:99px; padding:2px 10px; margin-bottom:10px;}
-  #opts{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
-  @media (max-width:520px){ #opts{grid-template-columns:1fr;} }
-  .opt{
-    border:2px solid #F6DCDA; background:#fff; border-radius:14px; padding:13px 10px;
-    font-size:16px; font-family:inherit; color:var(--ink); cursor:pointer; transition:all .12s;
-  }
-  .opt:hover{border-color:var(--pink);}
-  .opt.correct{background:#E4F7F0; border-color:#3CBF8E; color:#177A54; font-weight:bold;}
-  .opt.wrong{background:#FDEBEC; border-color:#E5737C; color:#B03A45;}
-  .opt:disabled{cursor:default;}
-  #feedback{display:none; margin-top:12px; border-radius:14px; padding:12px 14px; font-size:14px; line-height:1.7;}
-  #feedback.ok{background:#E4F7F0; color:#177A54;}
-  #feedback.no{background:#FDEBEC; color:#8F2F39;}
-  #feedback .go{font-size:12px; opacity:.75; margin-top:4px;}
-  #stars{font-size:44px; text-align:center; letter-spacing:6px; margin:8px 0 2px;}
-  #rtitle{text-align:center; font-size:22px; font-weight:bold;}
-  #rsub{text-align:center; font-size:13px; color:#9a8f8f; margin:6px 0 12px;}
-  .review{display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px dashed #F3DEDB; font-size:14px;}
-  .review .mark{width:22px; text-align:center; font-weight:bold;}
-  .review .mark.y{color:#3CBF8E;} .review .mark.n{color:#E5737C;}
-  .review svg{width:64px; height:auto; flex:none;}
-  .codex-item{display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px dashed #F3DEDB;}
-  .codex-item:last-child{border-bottom:none;}
-  .codex-item svg{width:150px; height:auto; flex:none;}
-  .codex-item h3{font-size:16px; margin-bottom:3px;}
-  .codex-item p{font-size:13px; color:#7d7070; line-height:1.6;}
-  .foot{margin-top:16px; text-align:center; font-size:11px; color:#b8a9a9;}
+  header p{font-size:13px;color:#9a8f8f;margin-top:6px;}
+  .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:16px;margin-top:14px;}
+  a.gbtn{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink);padding:14px 12px;border-radius:16px;background:linear-gradient(135deg,#FFFDFB,#FFF3F0);border:2px solid #FFF0EE;margin-top:10px;transition:all .15s;}
+  a.gbtn:hover{border-color:var(--pink);transform:translateY(-1px);}
+  a.gbtn .ico{font-size:32px;flex:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.06);}
+  a.gbtn .tx{flex:1;min-width:0;}
+  a.gbtn .tx b{display:block;font-size:17px;}
+  a.gbtn .tx small{display:block;font-size:12px;color:#9a8f8f;margin-top:3px;line-height:1.5;}
+  a.gbtn .tx em{display:block;font-style:normal;font-size:11px;color:#3CBF8E;margin-top:4px;}
+  a.gbtn .go{flex:none;font-size:22px;color:var(--pink);font-weight:bold;}
+  .tip{margin-top:14px;font-size:12px;color:#7d7070;line-height:1.8;text-align:center;}
+  .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;line-height:1.8;}
+  .foot a{color:#b8878d;text-decoration:none;}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>元件识别<span class="dot">大作战</span></h1>
-    <p>电子制作社团 · 电阻 / 电容 / 电感 / 二极管 / 三极管 / 芯片</p>
+    <h1>电子社<span class="dot">小游戏厅</span> 🎮</h1>
+    <p>电子制作社团 · 课堂配套小游戏 · 手机电脑都能玩</p>
   </header>
 
-  <div id="screen-home" class="screen on">
-    <div class="card home-grid">
-      <button class="btn" onclick="startGame('identify')"><span class="mode-ico">🔍</span>元件识别闯关<small>看图 / 听描述，认出它是谁 · 10 题</small></button>
-      <button class="btn teal" onclick="startGame('band')"><span class="mode-ico">🎨</span>色环读数挑战<small>看色环报阻值 · 8 题</small></button>
-      <button class="btn blue" onclick="showCodex()"><span class="mode-ico">📖</span>元件图鉴<small>先学习，再挑战</small></button>
-    </div>
-    <div class="card" style="font-size:13px; color:#7d7070; line-height:1.8;">
-      🎯 规则：每题 20 秒，答对 10 分，连击有加成；答错会给你一张知识卡，看完继续。<br>
-      ⌨️ 电脑党可用数字键 1–4 快速作答。
-    </div>
+  <div class="card">
+    <a class="gbtn" href="yuanjian.html">
+      <span class="ico">🔍</span>
+      <span class="tx"><b>元件识别大作战</b><small>看图 / 听描述认元件 + 色环读数挑战（10+8 题）</small><em id="b1"></em></span>
+      <span class="go">→</span>
+    </a>
+    <a class="gbtn" href="fanyi.html">
+      <span class="ico">🃏</span>
+      <span class="tx"><b>符号翻牌配对</b><small>原理图符号 ↔ 元件名，翻牌记忆配对，3 个难度</small><em id="b2"></em></span>
+      <span class="go">→</span>
+    </a>
+    <a class="gbtn" href="hanjie.html">
+      <span class="ico">🔧</span>
+      <span class="tx"><b>流程排序挑战</b><small>焊接五步法、通电前检查、故障排查，按正确顺序点选</small><em id="b3"></em></span>
+      <span class="go">→</span>
+    </a>
+    <a class="gbtn" href="wanyongbiao.html">
+      <span class="ico">🎛️</span>
+      <span class="tx"><b>万用表快答</b><small>12 个测量场景选对档位，档位错一步，仪表伤一路</small><em id="b4"></em></span>
+      <span class="go">→</span>
+    </a>
+    <a class="gbtn" href="anquan.html">
+      <span class="ico">🚦</span>
+      <span class="tx"><b>安全红绿灯</b><small>快速判断操作是安全还是危险，3 条命，越答越快</small><em id="b5"></em></span>
+      <span class="go">→</span>
+    </a>
   </div>
 
-  <div id="screen-game" class="screen">
-    <div id="hud">
-      <span class="pill">第 <b id="hno">1</b>/<span id="htot">10</span> 题</span>
-      <span class="pill">得分 <b id="hscore">0</b></span>
-      <span class="pill">连击 <b id="hstreak">0</b></span>
-      <span class="spacer"></span>
-      <span class="pill" id="hmode">识别闯关</span>
-    </div>
-    <div id="timerwrap"><div id="tbar"></div></div>
-    <div id="qstage">
-      <div id="qsvg"></div>
-      <div id="qtext"></div>
-    </div>
-    <div id="opts"></div>
-    <div id="feedback"></div>
-    <button class="btn ghost" id="btnquit" onclick="goHome()">✕ 放弃本局</button>
-  </div>
+  <div class="tip">⌨️ 部分游戏支持数字键 1–4 快速作答<br>🏆 各游戏的最佳成绩会自动保存在本机</div>
 
-  <div id="screen-result" class="screen">
-    <div class="card">
-      <div id="stars"></div>
-      <div id="rtitle"></div>
-      <div id="rsub"></div>
-      <div id="reviews"></div>
-      <button class="btn" onclick="startGame(state.mode)">再来一局</button>
-      <button class="btn ghost" onclick="goHome()">回主页</button>
-    </div>
-  </div>
-
-  <div id="screen-codex" class="screen">
-    <div class="card" id="codexlist"></div>
-    <button class="btn ghost" onclick="goHome()">← 返回</button>
-  </div>
-
-  <div class="foot">电子社 2026 学年 · 动手拆一块板，比看十张图更有用</div>
+  <div class="foot">电子社 2026 学年 · 动手拆一块板，比看十张图更有用<br><a href="https://github.com/hao051026/dianzi-yuanjian-youxi" target="_blank">GitHub 仓库</a></div>
 </div>
-
 <script>
 "use strict";
-var BAND = {black:"#1a1a1a",brown:"#8a4b22",red:"#d94141",orange:"#f0862a",yellow:"#f2c53d",
-  green:"#3f9e63",blue:"#3f6fd1",violet:"#9159c9",gray:"#9b9b9b",white:"#efefef",
-  gold:"#d4af37",silver:"#c4c4c4"};
-
-function svgWrap(inner){return '<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';}
-function lead(x1,x2,y){return '<line x1="'+x1+'" y1="'+y+'" x2="'+x2+'" y2="'+y+'" stroke="#8d8d8d" stroke-width="5" stroke-linecap="round"/>';}
-function vLead(x,y1,y2){return '<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+y2+'" stroke="#8d8d8d" stroke-width="5" stroke-linecap="round"/>';}
-
-function svgResistor(bands){
-  var b="";
-  for(var i=0;i<bands.length;i++){
-    b+='<rect x="'+(96+i*26)+'" y="42" width="13" height="76" rx="3" fill="'+BAND[bands[i]]+'"/>';
-  }
-  return svgWrap(lead(0,62,80)+lead(238,300,80)+
-    '<rect x="62" y="40" width="176" height="80" rx="30" fill="#f2dfc0" stroke="#d9c39a" stroke-width="2"/>'+b);
-}
-function svgSmd(){
-  return svgWrap(
-    '<rect x="70" y="55" width="160" height="50" rx="6" fill="#3a3a3a"/>'+
-    '<rect x="70" y="55" width="26" height="50" rx="5" fill="#c9c9c9"/>'+
-    '<rect x="204" y="55" width="26" height="50" rx="5" fill="#c9c9c9"/>'+
-    '<text x="150" y="88" font-size="22" fill="#fff" text-anchor="middle" font-family="Arial">103</text>');
-}
-function svgCeramic(){
-  return svgWrap(vLead(128,118,152)+vLead(172,118,152)+
-    '<circle cx="150" cy="78" r="46" fill="#4f74d8" stroke="#3a5cb8" stroke-width="3"/>'+
-    '<text x="150" y="86" font-size="22" fill="#fff" text-anchor="middle" font-family="Arial">104</text>');
-}
-function svgElec(){
-  var m="";
-  for(var y=34;y<=118;y+=14){m+='<text x="216" y="'+(y+5)+'" font-size="13" fill="#fff" text-anchor="middle">−</text>';}
-  return svgWrap(vLead(132,132,156)+vLead(168,132,156)+
-    '<rect x="100" y="22" width="100" height="112" rx="12" fill="#2b6cb0" stroke="#1f4f82" stroke-width="3"/>'+
-    '<rect x="200" y="22" width="14" height="112" rx="6" fill="#f5f5f5"/>'+m+
-    '<path d="M100 34 Q150 14 200 34" fill="none" stroke="#1f4f82" stroke-width="3"/>'+
-    '<text x="146" y="80" font-size="14" fill="#fff" text-anchor="middle" font-family="Arial">470μF</text>');
-}
-function svgInductor(){
-  var coil="";
-  for(var i=0;i<5;i++){
-    coil+='<path d="M'+(108+i*18)+' 62 a9 18 0 0 1 0 36" fill="none" stroke="#b06a2a" stroke-width="6" stroke-linecap="round"/>';
-  }
-  return svgWrap(lead(0,74,80)+lead(226,300,80)+
-    '<rect x="74" y="52" width="152" height="56" rx="10" fill="#3f7d4e" stroke="#2e5c39" stroke-width="2"/>'+coil);
-}
-function svgDiode(){
-  return svgWrap(lead(0,66,80)+lead(234,300,80)+
-    '<rect x="66" y="46" width="168" height="68" rx="26" fill="#262626"/>'+
-    '<rect x="196" y="46" width="20" height="68" rx="6" fill="#d8d8d8"/>'+
-    '<text x="120" y="88" font-size="18" fill="#eee" text-anchor="middle" font-family="Arial">1N4007</text>');
-}
-function svgLed(){
-  return svgWrap(
-    '<path d="M118 46 a44 44 0 0 1 64 0 l0 34 a32 32 0 0 1 -64 0 z" fill="#ff6b6b" stroke="#d94b4b" stroke-width="3" opacity=".9"/>'+
-    '<rect x="126" y="80" width="48" height="18" fill="#ff6b6b" stroke="#d94b4b" stroke-width="3"/>'+
-    '<line x1="140" y1="52" x2="140" y2="96" stroke="#fff" stroke-width="4" opacity=".7"/>'+
-    '<path d="M158 56 l10 12 l-20 0 z" fill="#fff" opacity=".8"/>'+
-    vLead(138,98,152)+vLead(162,98,140));
-}
-function svgTransistor(){
-  return svgWrap(
-    '<path d="M104 86 a46 46 0 0 1 92 0 l0 6 q0 10 -10 10 l-72 0 q-10 0 -10 -10 z" fill="#2f2f2f" stroke="#171717" stroke-width="2"/>'+
-    '<text x="150" y="76" font-size="15" fill="#eee" text-anchor="middle" font-family="Arial">S9013</text>'+
-    vLead(126,102,150)+vLead(150,102,156)+vLead(174,102,150));
-}
-function svgIc(){
-  var pins="";
-  for(var i=0;i<7;i++){
-    pins+='<rect x="88" y="'+(36+i*12)+'" width="18" height="6" fill="#9b9b9b"/>';
-    pins+='<rect x="212" y="'+(36+i*12)+'" width="18" height="6" fill="#9b9b9b"/>';
-  }
-  return svgWrap('<path d="M108 24 l104 0 l0 112 l-104 0 l0 -40 a16 16 0 0 1 0 -32 z" fill="#242424"/>'+
-    '<circle cx="126" cy="44" r="6" fill="#5a5a5a"/>'+pins+
-    '<text x="160" y="88" font-size="18" fill="#eee" text-anchor="middle" font-family="Arial">NE555</text>');
-}
-function svgHeader(){
-  var pins="";
-  for(var i=0;i<8;i++){
-    pins+='<rect x="'+(76+i*19)+'" y="30" width="10" height="52" fill="#d4af37"/>';
-  }
-  return svgWrap(pins+'<rect x="66" y="80" width="168" height="34" rx="5" fill="#3f6fd1"/>');
-}
-
-var PARTS = [
- {id:"res",   name:"色环电阻", svg:function(){return svgResistor(["brown","black","red","gold"]);},
-  fact:"限流分压，无极性。四色环：前两位数字 + 倍率 + 误差。"},
- {id:"smd",   name:"贴片电阻", svg:svgSmd,
-  fact:"黑色小方块，表面数字是阻值代码：103 = 10×10³Ω = 10kΩ。"},
- {id:"cer",   name:"陶瓷电容", svg:svgCeramic,
-  fact:"蓝色小圆片，无极性，高频滤波好手。104 = 0.1μF。"},
- {id:"elec",  name:"电解电容", svg:svgElec,
-  fact:"圆柱形，外壳白条一侧是负极。接反会鼓包甚至爆浆！"},
- {id:"ind",   name:"电感", svg:svgInductor,
-  fact:"带磁芯的线圈，通直流、阻交流，常用于电源滤波。"},
- {id:"dio",   name:"二极管", svg:svgDiode,
-  fact:"黑色柱体，银环端是负极，只许电流单向通过。"},
- {id:"led",   name:"LED", svg:svgLed,
-  fact:"发光二极管：长脚正极、短脚负极，记得串限流电阻。"},
- {id:"tr",    name:"三极管", svg:svgTransistor,
-  fact:"TO-92 半圆封装，三个脚 E/B/C，小电流控制大电流。"},
- {id:"ic",    name:"芯片 (DIP)", svg:svgIc,
-  fact:"黑色方块带缺口，缺口对准丝印方向，插反会烧。"},
- {id:"hdr",   name:"排针", svg:svgHeader,
-  fact:"接插件，负责板与板之间的可拆卸连接。"}
-];
-var RIDDLES = [
- {id:"res",  q:"我把自己涂成五颜六色的环，\n不为好看，是为了让你读出我的阻值。"},
- {id:"elec", q:"我是圆柱形的储能罐，\n外壳上那条白带，指着我的负极。"},
- {id:"cer",  q:"我是一片蓝色小圆饼，\n标着 104，其实是 0.1μF。"},
- {id:"ind",  q:"我是磁芯上绕的线圈，\n直流从我这儿畅通无阻，交流却被我拦下。"},
- {id:"dio",  q:"我只有一个方向放行电流，\n银环那一头，是出口。"},
- {id:"led",  q:"给我一点电流我就发光，\n但我的长腿是正极，别接反。"},
- {id:"tr",   q:"三个引脚，一个小电流就能控制大电流，\n我是电路里的小阀门。"},
- {id:"ic",   q:"我肚子里集成了成千上万个元件，\n安装时请把我的缺口对准丝印。"},
- {id:"hdr",  q:"我是一排金色小柱子，\n两块板子的桥，由我来搭。"},
- {id:"smd",  q:"我黑黑小小没有长腿，\n身上的 103 是暗号：10kΩ。"}
-];
-function part(id){for(var i=0;i<PARTS.length;i++){if(PARTS[i].id===id)return PARTS[i];}return null;}
-
-var DIGIT_NAME=["black","brown","red","orange","yellow","green","blue","violet","gray","white"];
-var MULT_NAME=["black","brown","red","orange"];
-function fmtOhm(v){
-  if(v>=1000000){var m=v/1000000;return (m%1?m.toFixed(1):m)+" MΩ";}
-  if(v>=1000){var k=v/1000;return (k%1?k.toFixed(1):k)+" kΩ";}
-  return v+" Ω";
-}
-function makeBandQ(){
-  var d1=1+Math.floor(Math.random()*9), d2=Math.floor(Math.random()*10);
-  var e=Math.floor(Math.random()*4);
-  var base=d1*10+d2, val=base*Math.pow(10,e);
-  var bands=[DIGIT_NAME[d1],DIGIT_NAME[d2],MULT_NAME[e],"gold"];
-  var pool=[];
-  function add(v){if(v>0&&v!==val&&pool.indexOf(v)<0)pool.push(v);}
-  add((d2*10+d1)*Math.pow(10,e));
-  add(base*Math.pow(10,e+1));
-  if(e>0)add(base*Math.pow(10,e-1));
-  add(base*Math.pow(10,e)+100);
-  add(val+Math.pow(10,Math.max(0,e)));
-  var opts=[val];
-  for(var i=0;i<pool.length&&opts.length<4;i++){opts.push(pool[i]);}
-  while(opts.length<4){opts.push(val+(opts.length+1)*1000);}
-  return {bands:bands, answer:fmtOhm(val), options:opts.map(fmtOhm)};
-}
-
-function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
-function pickN(arr,n){return shuffle(arr.slice()).slice(0,n);}
-function show(id){
-  ["home","game","result","codex"].forEach(function(s){
-    document.getElementById("screen-"+s).className="screen"+(s===id?" on":"");
-  });
-}
-var AC=null;
-function beep(f,d,type){
-  try{
-    if(!AC){var C=window.AudioContext||window.webkitAudioContext; AC=new C();}
-    var o=AC.createOscillator(), g=AC.createGain();
-    o.type=type||"sine"; o.frequency.value=f;
-    g.gain.setValueAtTime(.12,AC.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
-    o.connect(g); g.connect(AC.destination);
-    o.start(); o.stop(AC.currentTime+d);
-  }catch(e){}
-}
-
-var state={mode:"identify", qs:[], qi:0, score:0, streak:0, review:[], timer:null, tLeft:0, locked:false};
-var TOTAL={identify:10, band:8};
-var TIME=20;
-
-function buildQuestions(mode){
-  var qs=[];
-  if(mode==="band"){
-    for(var i=0;i<TOTAL.band;i++)qs.push({kind:"band"});
-    return qs;
-  }
-  var ids=pickN(PARTS.map(function(p){return p.id;}),6);
-  ids.forEach(function(id){qs.push({kind:"pic", id:id});});
-  pickN(RIDDLES,4).forEach(function(r){qs.push({kind:"riddle", id:r.id, q:r.q});});
-  return shuffle(qs);
-}
-
-function startGame(mode){
-  state.mode=mode; state.qs=buildQuestions(mode); state.qi=0;
-  state.score=0; state.streak=0; state.review=[]; state.locked=false;
-  document.getElementById("hmode").textContent = mode==="band"?"色环读数":"识别闯关";
-  document.getElementById("htot").textContent = state.qs.length;
-  show("game");
-  renderQuestion();
-}
-function goHome(){ stopTimer(); show("home"); }
-
-function stopTimer(){ if(state.timer){clearInterval(state.timer); state.timer=null;} }
-function runTimer(){
-  stopTimer(); state.tLeft=TIME;
-  var bar=document.getElementById("tbar");
-  bar.style.width="100%";
-  state.timer=setInterval(function(){
-    state.tLeft-=0.1;
-    bar.style.width=Math.max(0,state.tLeft/TIME*100)+"%";
-    if(state.tLeft<=5){bar.style.background="#E5737C";}
-    if(state.tLeft<=0){stopTimer(); onAnswer(-1);}
-  },100);
-}
-
-function renderQuestion(){
-  state.locked=false;
-  var fb=document.getElementById("feedback"); fb.style.display="none";
-  document.getElementById("tbar").style.background="linear-gradient(90deg,var(--teal),var(--pink))";
-  var q=state.qs[state.qi];
-  document.getElementById("hno").textContent=state.qi+1;
-  document.getElementById("hscore").textContent=state.score;
-  document.getElementById("hstreak").textContent=state.streak;
-  var stage=document.getElementById("qsvg"), txt=document.getElementById("qtext"), opts=document.getElementById("opts");
-  opts.innerHTML=""; stage.innerHTML=""; txt.innerHTML="";
-  var correct, options;
-  if(q.kind==="band"){
-    var b=makeBandQ(); q.gen=b;
-    stage.innerHTML=svgResistor(b.bands);
-    txt.innerHTML='<span class="tag">色环读数</span><br>这只四色环电阻，阻值是多少？';
-    correct=b.answer; options=shuffle(b.options.slice());
-  }else{
-    if(q.kind==="pic"){
-      stage.innerHTML=part(q.id).svg();
-      txt.innerHTML='<span class="tag">看图识别</span><br>它是谁？';
-    }else{
-      txt.innerHTML='<span class="tag">听描述猜元件</span><br>'+q.q.replace(/\n/g,"<br>");
-    }
-    correct=part(q.id).name;
-    options=shuffle(PARTS.filter(function(x){return x.id!==q.id;}).map(function(x){return x.name;}));
-    options=[correct].concat(options.slice(0,3)); options=shuffle(options);
-  }
-  q._correct=correct;
-  options.forEach(function(name,idx){
-    var btn=document.createElement("button");
-    btn.className="opt"; btn.textContent=(idx+1)+". "+name; btn.dataset.name=name;
-    btn.onclick=function(){onAnswer(idx);};
-    opts.appendChild(btn);
-  });
-  runTimer();
-}
-
-function onAnswer(idx){
-  if(state.locked)return;
-  state.locked=true; stopTimer();
-  var q=state.qs[state.qi];
-  var correct=q._correct;
-  var btns=document.querySelectorAll(".opt");
-  var chosen = idx>=0 && btns[idx] ? btns[idx].dataset.name : null;
-  var ok = chosen===correct;
-  for(var i=0;i<btns.length;i++){
-    btns[i].disabled=true;
-    if(btns[i].dataset.name===correct)btns[i].classList.add("correct");
-    else if(i===idx)btns[i].classList.add("wrong");
-  }
-  var fb=document.getElementById("feedback");
-  fb.className="";
-  if(ok){
-    state.streak++;
-    var gain=10+Math.min(state.streak-1,5)*2;
-    state.score+=gain;
-    fb.classList.add("ok");
-    fb.innerHTML="✅ 答对了！+"+gain+" 分"+(state.streak>1?"（连击 ×"+state.streak+"）":"");
-    fb.style.display="block";
-    beep(880,.12); setTimeout(function(){beep(1320,.15);},90);
-  }else{
-    state.streak=0;
-    var tip;
-    if(q.kind==="band")tip="🎨 读数口诀：前两位数字、第三位是 10 的几次方、金色误差 ±5%。正确答案："+correct;
-    else tip="📖 知识卡 · "+part(q.id).name+"："+part(q.id).fact;
-    fb.classList.add("no");
-    fb.innerHTML=(chosen?"❌ 不对，你选了「"+chosen+"」。":"⏰ 时间到！")+tip+
-      '<div class="go">点击此处继续</div>';
-    fb.style.display="block";
-    beep(220,.25,"square");
-  }
-  state.review.push({name:correct, ok:ok, q:q});
-  document.getElementById("hscore").textContent=state.score;
-  document.getElementById("hstreak").textContent=state.streak;
-  var advance=function(){
-    state.qi++;
-    if(state.qi>=state.qs.length){showResult();}else{renderQuestion();}
-  };
-  if(ok){setTimeout(advance,900);}
-  else{
-    var un=function(){fb.removeEventListener("click",un);advance();};
-    setTimeout(function(){fb.addEventListener("click",un);},350);
-  }
-}
-
-function showResult(){
-  var total=state.review.length;
-  var right=state.review.filter(function(r){return r.ok;}).length;
-  var pct=total?right/total:0;
-  var stars = pct>=0.9?"⭐⭐⭐":(pct>=0.7?"⭐⭐":(pct>=0.5?"⭐":""));
-  var title = pct>=0.9?"元件大师！":(pct>=0.7?"眼力不错":(pct>=0.5?"继续练手":"先去图鉴逛逛"));
-  document.getElementById("stars").textContent=stars||"🌱";
-  document.getElementById("rtitle").textContent=title;
-  document.getElementById("rsub").textContent="答对 "+right+"/"+total+" · 得分 "+state.score;
-  var rv=document.getElementById("reviews"); rv.innerHTML="";
-  state.review.forEach(function(r){
-    var div=document.createElement("div"); div.className="review";
-    var mark=document.createElement("span"); mark.className="mark "+(r.ok?"y":"n");
-    mark.textContent=r.ok?"✓":"✗";
-    var thumb=document.createElement("span");
-    var q=r.q;
-    if(q.kind==="band"&&q.gen){thumb.innerHTML=svgResistor(q.gen.bands);}
-    else{thumb.innerHTML=part(q.id).svg();}
-    var nm=document.createElement("span"); nm.textContent=r.name;
-    div.appendChild(mark); div.appendChild(thumb); div.appendChild(nm);
-    rv.appendChild(div);
-  });
-  show("result");
-  if(pct>=0.9){beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);}
-}
-
-function showCodex(){
-  var box=document.getElementById("codexlist"); box.innerHTML="";
-  PARTS.forEach(function(p){
-    var div=document.createElement("div"); div.className="codex-item";
-    var s=document.createElement("span"); s.innerHTML=p.svg();
-    var info=document.createElement("div");
-    info.innerHTML="<h3>"+p.name+"</h3><p>"+p.fact+"</p>";
-    div.appendChild(s); div.appendChild(info);
-    box.appendChild(div);
-  });
-  show("codex");
-}
-
-/* 快捷入口：#game 识别闯关 / #band 色环 / #codex 图鉴（教师演示用） */
-(function(){
-  var h=(location.hash||"").replace("#","");
-  if(h==="game"){startGame("identify");}
-  else if(h==="band"){startGame("band");}
-  else if(h==="codex"){showCodex();}
-})();
-
-document.addEventListener("keydown",function(e){
-  if(!document.getElementById("screen-game").classList.contains("on"))return;
-  var n=parseInt(e.key,10);
-  if(n>=1&&n<=4){
-    var btns=document.querySelectorAll(".opt");
-    if(btns[n-1]&&!btns[n-1].disabled)btns[n-1].click();
-  }
+function ls(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
+function num(k){try{var v=localStorage.getItem(k);return v===null?null:parseInt(v,10);}catch(e){return null;}}
+document.getElementById("b1").textContent="三大模式 · 离线可玩";
+var fb=null,fl="";
+[4,6,8].forEach(function(n){
+  var b=ls("fanyi_best_"+n);
+  if(b&&(!fb||b.m<fb.m)){fb=b;fl=n+" 对";}
 });
+document.getElementById("b2").textContent=fb?("🏆 最佳："+fl+" · "+fb.m+" 步 / "+fb.t+" 秒"):"暂无纪录，来挑战";
+var hb=ls("hanjie_best");
+document.getElementById("b3").textContent=hb?("🏆 最佳：错 "+hb.e+" 次 · "+hb.t+" 秒"):"暂无纪录，来挑战";
+var wb=num("wan_best");
+document.getElementById("b4").textContent=wb!==null?("🏆 最高分 "+wb):"暂无纪录，来挑战";
+var ab=num("anquan_best");
+document.getElementById("b5").textContent=ab!==null?("🏆 最高分 "+ab):"暂无纪录，来挑战";
 </script>
 </body>
 </html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全红绿灯 · 电子社</title>
+<style>
+  :root{--pink:#FF9AA0;--pinkbg:#FFE4E1;--teal:#7DCEC8;--blue:#A2BCF6;--ink:#4A4A4A;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:linear-gradient(135deg,var(--pinkbg) 0%,#FFF6F0 60%,#EAF7F5 100%);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:720px;padding:14px 14px 40px;}
+  header{text-align:center;padding:10px 0 2px;}
+  header h1{font-size:24px;letter-spacing:2px;}
+  header h1 .dot{color:var(--pink);}
+  header p{font-size:12px;color:#9a8f8f;margin-top:4px;}
+  .hubbar{text-align:center;margin-top:8px;}
+  .hubbar a{display:inline-block;background:#fff;border-radius:99px;padding:6px 16px;color:var(--ink);text-decoration:none;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  #hud{display:flex;gap:8px;justify-content:center;margin-top:12px;font-size:14px;flex-wrap:wrap;}
+  #hud .pill{background:#fff;border-radius:99px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  #hud .pill b{color:var(--pink);}
+  #timerwrap{height:8px;border-radius:99px;background:#F3DEDB;margin-top:10px;overflow:hidden;}
+  #tbar{height:100%;width:100%;background:linear-gradient(90deg,var(--teal),var(--pink));border-radius:99px;}
+  .card{background:#fff;border-radius:18px;box-shadow:0 6px 22px rgba(255,154,160,.18);padding:22px 18px;margin-top:14px;text-align:center;}
+  #stmt{font-size:20px;font-weight:bold;line-height:1.7;min-height:88px;display:flex;align-items:center;justify-content:center;}
+  #why{display:none;margin-top:10px;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.6;}
+  #why.ok{background:#E4F7F0;color:#177A54;}
+  #why.no{background:#FDEBEC;color:#8F2F39;}
+  #btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;}
+  .big{border:none;border-radius:16px;padding:20px 10px;font-size:18px;font-family:inherit;color:#fff;cursor:pointer;transition:transform .08s;}
+  .big:active{transform:scale(.96);}
+  .big.green{background:linear-gradient(135deg,#3CBF8E,#2E9E6F);}
+  .big.red{background:linear-gradient(135deg,#E5737C,#C74A54);}
+  .big:disabled{opacity:.55;cursor:default;}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-family:inherit;color:#fff;background:var(--pink);cursor:pointer;margin-top:14px;}
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid #FFE4E1;}
+  #win{position:fixed;inset:0;background:rgba(74,74,74,.45);display:none;align-items:center;justify-content:center;padding:20px;}
+  #win.on{display:flex;}
+  #winbox{background:#fff;border-radius:18px;padding:26px;text-align:center;max-width:340px;width:100%;}
+  #winbox h2{font-size:22px;margin-bottom:8px;}
+  #winbox p{font-size:14px;color:#7d7070;line-height:1.8;}
+  .foot{margin-top:18px;text-align:center;font-size:11px;color:#b8a9a9;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><h1>安全<span class="dot">红绿灯</span></h1><p>这条操作是安全还是危险？快速判断 · 3 条命</p></header>
+  <div class="hubbar"><a href="index.html">← 游戏大厅</a></div>
+  <div id="hud">
+    <span class="pill">第 <b id="hno">1</b>/<span id="htot">15</span> 条</span>
+    <span class="pill">得分 <b id="hscore">0</b></span>
+    <span class="pill">连击 <b id="hcombo">0</b></span>
+    <span class="pill" id="lives">❤❤❤</span>
+  </div>
+  <div id="timerwrap"><div id="tbar"></div></div>
+  <div class="card">
+    <div id="stmt"></div>
+    <div id="why"></div>
+    <div id="btns">
+      <button class="big green" id="bsafe" onclick="judge(true)">✓<br>安全操作</button>
+      <button class="big red" id="bdanger" onclick="judge(false)">✗<br>危险操作</button>
+    </div>
+  </div>
+  <button class="btn ghost" onclick="location.href='index.html'">✕ 放弃本局</button>
+  <div class="foot">电子社 2026 学年 · 安全不是提醒，是规矩</div>
+</div>
+<div id="win"><div id="winbox">
+  <h2 id="rtitle"></h2><p id="winstat"></p><p id="winbest"></p>
+  <button class="btn" onclick="start()">再来一局</button>
+  <button class="btn ghost" style="background:#fff;color:#4A4A4A;border:2px solid #FFE4E1;" onclick="location.href='index.html'">回大厅</button>
+</div></div>
+<script>
+"use strict";
+var POOL=[
+ {t:"焊接时让烙铁头始终挂着一层薄锡",safe:true,why:"挂锡传热快、不易氧化，焊点才有光泽。"},
+ {t:"拿起芯片前先摸一下接地金属",safe:true,why:"放掉身上静电，防止击穿芯片。"},
+ {t:"焊完立刻把烙铁放回烙铁架",safe:true,why:"烙铁头 300℃ 以上，随手放桌面极易烫伤甚至引燃。"},
+ {t:"测电阻前先给电路断电",safe:true,why:"带电测阻值不准，还可能损坏仪表。"},
+ {t:"拆板前确认板上没有残留电池",safe:true,why:"避免拆解中短路起火。"},
+ {t:"戴防静电手套拆解废旧板",safe:true,why:"既防静电，也防板边割手。"},
+ {t:"废弃板件按电子垃圾分类处理",safe:true,why:"电路板含重金属，不能扔普通垃圾桶。"},
+ {t:"焊点还没冷却，先不急着碰",safe:true,why:"急冷或晃动会造成虚焊。"},
+ {t:"用放大镜观察焊盘和过孔",safe:true,why:"看得清才认得准，也保护眼睛。"},
+ {t:"元件盒分格存放、用完归位",safe:true,why:"方便下一组取用，混装浪费时间。"},
+ {t:"通电前先做一遍通断检查",safe:true,why:"提前发现短路，避免烧板。"},
+ {t:"烙铁随手放在桌面上",safe:false,why:"300℃ 烙铁头会烫伤人、烫坏桌面甚至引燃纸张。"},
+ {t:"凑近焊点直接用眼睛看细节",safe:false,why:"锡珠飞溅可能伤眼，应该用放大镜。"},
+ {t:"带电插拔元件",safe:false,why:"容易产生浪涌，烧坏元件甚至伤人。"},
+ {t:"测电阻时双手同时捏住表笔金属部分",safe:false,why:"人体电阻并联进电路，读数全错还有触电风险。"},
+ {t:"电解电容装反了，先通电试试看",safe:false,why:"反接的电解电容会鼓包甚至爆浆。"},
+ {t:"用纸巾垫在烙铁头下面吸锡",safe:false,why:"纸巾易燃，必须用高温海绵或钢丝球。"},
+ {t:"直接拆一台带锂电池的旧设备",safe:false,why:"锂电池短路易起火，应先断开电池。"},
+ {t:"测 220V 时双手各握一支表笔",safe:false,why:"双手触电电流经过心脏，绝对禁止；应单手操作。"},
+ {t:"没放静电就直接拿芯片",safe:false,why:"静电会击穿芯片内部的 PN 结。"},
+ {t:"焊接烟很大也不开窗通风",safe:false,why:"焊烟含松香挥发物，长期吸入伤呼吸道。"},
+ {t:"发现冒烟还凑近继续观察",safe:false,why:"应立即断电！冒烟是短路或过流的信号。"},
+ {t:"把焊完的废锡渣扫进普通垃圾桶",safe:false,why:"锡渣含铅，应按电子垃圾处理。"}
+];
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var AC=null;
+function beep(f,d,type){
+  try{
+    if(!AC){var C=window.AudioContext||window.webkitAudioContext;AC=new C();}
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"sine";o.frequency.value=f;
+    g.gain.setValueAtTime(.12,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g);g.connect(AC.destination);
+    o.start();o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+var state={qs:[],qi:0,score:0,combo:0,lives:3,timer:null,tLeft:0,limit:5,locked:false};
+function start(){
+  state.qs=shuffle(POOL.slice()).slice(0,15);
+  state.qi=0;state.score=0;state.combo=0;state.lives=3;state.locked=false;
+  document.getElementById("htot").textContent=state.qs.length;
+  document.getElementById("win").classList.remove("on");
+  render();
+}
+function render(){
+  state.locked=false;
+  var why=document.getElementById("why");
+  why.style.display="none";why.className="";why.id="why";
+  var s=state.qs[state.qi];
+  document.getElementById("hno").textContent=state.qi+1;
+  document.getElementById("hscore").textContent=state.score;
+  document.getElementById("hcombo").textContent=state.combo;
+  var lv="";
+  for(var i=0;i<3;i++){lv+=i<state.lives?"❤":"🖤";}
+  document.getElementById("lives").textContent=lv;
+  document.getElementById("stmt").textContent=s.t;
+  var bs=document.getElementById("bsafe"),bd=document.getElementById("bdanger");
+  bs.disabled=false;bd.disabled=false;
+  state.limit=Math.max(2.5,5-state.combo*0.12);
+  runTimer();
+}
+function runTimer(){
+  if(state.timer)clearInterval(state.timer);
+  state.tLeft=state.limit;
+  var bar=document.getElementById("tbar");
+  bar.style.width="100%";
+  bar.style.background="linear-gradient(90deg,#7DCEC8,#FF9AA0)";
+  state.timer=setInterval(function(){
+    state.tLeft-=0.1;
+    bar.style.width=Math.max(0,state.tLeft/state.limit*100)+"%";
+    if(state.tLeft<=1.5){bar.style.background="#E5737C";}
+    if(state.tLeft<=0){clearInterval(state.timer);state.timer=null;judge(null);}
+  },100);
+}
+function judge(ans){
+  if(state.locked)return;
+  state.locked=true;
+  if(state.timer){clearInterval(state.timer);state.timer=null;}
+  var s=state.qs[state.qi];
+  var correct=(ans===s.safe);
+  var why=document.getElementById("why");
+  document.getElementById("bsafe").disabled=true;
+  document.getElementById("bdanger").disabled=true;
+  if(ans===null){
+    state.lives--;state.combo=0;
+    why.classList.add("no");
+    why.innerHTML="⏰ 超时！这条是"+(s.safe?"<b>安全</b>":"<b>危险</b>")+"操作。<br>💡 "+s.why;
+    why.style.display="block";
+    beep(220,.3,"square");
+  }else if(correct){
+    state.combo++;
+    state.score+=5+state.combo;
+    why.classList.add("ok");
+    why.innerHTML="✅ 判断正确！+"+(5+state.combo)+" 分"+(state.combo>1?"（连击 ×"+state.combo+"）":"")+"<br>💡 "+s.why;
+    why.style.display="block";
+    beep(880,.1);setTimeout(function(){beep(1320,.12);},80);
+  }else{
+    state.lives--;state.combo=0;
+    why.classList.add("no");
+    why.innerHTML="❌ 判断错了！这条是"+(s.safe?"<b>安全</b>":"<b>危险</b>")+"操作。<br>💡 "+s.why;
+    why.style.display="block";
+    beep(220,.3,"square");
+  }
+  var wait=correct?950:1800;
+  setTimeout(function(){
+    state.qi++;
+    if(state.lives<=0){showResult(false);}
+    else if(state.qi>=state.qs.length){showResult(true);}
+    else{render();}
+  },wait);
+}
+function showResult(done){
+  var title=done?(state.lives===3?"满分保命王！":(state.lives===2?"安全标兵":"顺利通过")):"命用光了……";
+  document.getElementById("rtitle").textContent=title;
+  document.getElementById("winstat").textContent="得分 "+state.score+" · 剩余生命 "+state.lives+" / 3";
+  var best=0;
+  try{best=parseInt(localStorage.getItem("anquan_best")||"0",10);}catch(e){}
+  var isBest=state.score>best;
+  if(isBest){try{localStorage.setItem("anquan_best",String(state.score));}catch(e){}}
+  document.getElementById("winbest").textContent=isBest?"🏆 新纪录！":(best?("最高分 "+best):"");
+  document.getElementById("win").classList.add("on");
+  if(isBest){beep(660,.12);setTimeout(function(){beep(880,.12);},120);setTimeout(function(){beep(1100,.2);},240);}
+}
+start();
+</script>
+</body>
+</html>
